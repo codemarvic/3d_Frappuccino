@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Animated Scene</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script>
+        let scene, camera, renderer, grass, room;
+        const grassBlades = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Skybox
+            const loader = new THREE.CubeTextureLoader();
+            const texture = loader.load([
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/px.jpg',
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/nx.jpg',
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/py.jpg',
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/ny.jpg',
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/pz.jpg',
+                'https://threejsfundamentals.org/threejs/resources/images/skybox/nz.jpg',
+            ]);
+            scene.background = texture;
+
+            // Grass
+            const grassGeometry = new THREE.PlaneGeometry(0.1, 1, 1, 4);
+            const grassMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
+            for (let i = 0; i < 1000; i++) {
+                const blade = new THREE.Mesh(grassGeometry, grassMaterial);
+                blade.position.set(
+                    Math.random() * 20 - 10,
+                    0,
+                    Math.random() * 20 - 10
+                );
+                blade.rotation.y = Math.random() * Math.PI;
+                grassBlades.push(blade);
+                scene.add(blade);
+            }
+
+            // Room
+            const roomGeometry = new THREE.BoxGeometry(10, 5, 10);
+            const roomMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.BackSide });
+            room = new THREE.Mesh(roomGeometry, roomMaterial);
+            room.position.set(0, 2.5, 0);
+            scene.add(room);
+
+            camera.position.set(0, 1.6, 5);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(0, 1, 0);
+            scene.add(directionalLight);
+
+            // Controls
+            const gui = new dat.GUI();
+            const cameraFolder = gui.addFolder('Camera');
+            cameraFolder.add(camera.position, 'x', -10, 10);
+            cameraFolder.add(camera.position, 'y', 0, 10);
+            cameraFolder.add(camera.position, 'z', -10, 10);
+            cameraFolder.open();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Animate grass
+            grassBlades.forEach((blade, index) => {
+                blade.rotation.x = Math.sin(Date.now() * 0.001 + index) * 0.1;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
